@@ -29,11 +29,11 @@ cprof <- function(sequences,names) {
   # in nature, PDB_S25 contains crystalizable proteins, and DisProt contains
   # intrinically disordered proteins.
   profile_ref <- data.frame(SwissProt = c(1.5, 1.13, 5.9, 3.03, 3.96, 9.65, 2.29,
-  6.73, 4.13, 2.38, 5.4, 5.41, 5.35, 6.96, 7.89, 5.92, 3.95, 6.83, 6.67, 4.83),
-  PDB_S25= c(1.74, 1.44, 5.61, 3.5, 3.98, 8.68, 2.41, 6.72, 4.58, 2.22, 4.93,
-  5.63, 5.83, 7.16, 7.7, 6.37, 3.95, 6.19, 6.65, 4.57), DisProt = c(0.8, 0.67,
-  3.24, 2.13, 2.44, 6.22, 1.93, 5.41, 3.82, 1.87, 4.82, 5.56, 5.8, 7.41, 8.1,
-  7.85, 5.27, 8.65, 9.89, 8.11))
+                                          6.73, 4.13, 2.38, 5.4, 5.41, 5.35, 6.96, 7.89, 5.92, 3.95, 6.83, 6.67, 4.83),
+                            PDB_S25= c(1.74, 1.44, 5.61, 3.5, 3.98, 8.68, 2.41, 6.72, 4.58, 2.22, 4.93,
+                                       5.63, 5.83, 7.16, 7.7, 6.37, 3.95, 6.19, 6.65, 4.57), DisProt = c(0.8, 0.67,
+                                                                                                         3.24, 2.13, 2.44, 6.22, 1.93, 5.41, 3.82, 1.87, 4.82, 5.56, 5.8, 7.41, 8.1,
+                                                                                                         7.85, 5.27, 8.65, 9.89, 8.11))
 
   # Names of each residue
   row.names(profile_ref) <- c('C','W','I','Y','F','L','H','V','N','M','R','T',
@@ -88,25 +88,36 @@ cprof <- function(sequences,names) {
     array2 <- array(as.numeric(unlist(prof[[i]][[2]])), dim = c(20,1))
     array3 <- array(as.numeric(unlist(prof[[i]][[3]])), dim = c(20,1))
 
-    prof_array <- cbind(array1,array2,array3)
+    prof_array <- rbind(array1,array2,array3)
 
-    row.names(prof_array) <- c('C','W','I','Y','F','L','H','V','N','M','R','T',
-                               'D','G', 'A','K','Q','S','E','P')
+    residues <- row.names(profile_ref)
 
-    colnames(prof_array) <- c('SwissProt','PDB_S25','DisProt')
+    sets <- rep(c('SwissProt','PDB_S25','DisProt'),each=20)
 
-    t <- aperm(prof_array)
+    profile <- data.frame(freq=prof_array,residues=residues,Set=sets)
+
+    profile$residues <- factor(profile$residues, levels = row.names(profile_ref))
 
     title <- paste(names[i],'Compostion Profile',sep=" ")
 
-    # Plot
-    par(mar = c(5, 5, 2, 2),xpd = TRUE)
+    plot<-ggplot(profile, aes(x=residues, y=freq, fill=Set))+
+      geom_bar(stat="identity", position=position_dodge(),color='black')+
+      theme(panel.background = element_rect(fill = "aliceblue",color = "aliceblue"),
+            panel.grid.major = element_line(size = 0.2, linetype = 'solid', colour = "gray89"),
+            panel.grid.minor = element_line(size = 0.2, linetype = 'solid', colour = "gray89"))+
+      xlab('Amino Acid')+
+      ylab('Relative Frequency')+
+      ylim(-1.5,2)+
+      ggtitle(title)+
+      theme(plot.title = element_text(hjust = 0.5),title =element_text(size=12,face='bold'))
 
-    barplot(t,beside = TRUE,ylim = c(-1,2),col=c("red","blue","green"),xlab='Amino Acid',
-            ylab='Percent Frequency',main=title,cex.lab =1.2)
 
-    legend('bottomleft',legend=c('SwissProt','PDB_S25','DisProt'),fill=c("red","blue","green"),
-           cex=0.7, ncol=3,inset=c(-0.13,-0.265))
+    n <- as.character(i)
+    dir <- getwd()
+    dir <- paste0(dir,'/cprof_',n,'.png')
+    ggsave(dir, width= 9, height= 5)
+
+    print(plot)
 
   }
 
