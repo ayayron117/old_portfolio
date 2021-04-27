@@ -120,7 +120,7 @@ chplot <- function(sequences,names) {
     ylab("Absolute Net Charge")+
     coord_cartesian(xlim = c(0.2,0.65), ylim = c(0,0.65))+
     geom_point()+
-    geom_segment(aes(x = c(0.4043), y = c(0), xend = c(0.6777), yend = c(0.75)),            color='black')+
+    geom_segment(aes(x = c(0.4043), y = c(0), xend = c(0.6777), yend = c(0.75)), color='black')+
     theme(panel.background = element_rect(fill = "aliceblue",color = "aliceblue"),
           title =element_text(size=12,face='bold'))+
     geom_point(size=3)
