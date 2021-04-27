@@ -1,7 +1,7 @@
 Package: PDAnalysis
 Type: Package
 Title: Protein Disorder Analysis
-Version: 0.1.0
+Version: 1.0.0
 Author: Aaron Mohammed
 Maintainer: Aaron Mohammed <amohammed2@usf.edu>
 Description: Used for determining if a protein has disorder
