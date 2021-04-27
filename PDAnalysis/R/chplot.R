@@ -2,6 +2,7 @@
 #' @description Creates a charge-hydropathy plot for multiple proteins
 #' @param sequences Character vector of sequences
 #' @param names Character vector of protein names
+#' @export 
 #' @examples
 #'
 #' s <- c('MGNHAGKRELNAEKASTNSETNRGESEKKRNLGELSRTTSEDNEVFGEADANQNNGTSSQ
