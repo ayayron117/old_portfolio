@@ -111,6 +111,7 @@ chplot <- function(sequences,names) {
   # Stores the values of the mean hydropathy and mean charge in a data frame
   d <- data.frame(mean_H,mean_C,Proteins=names,line_color='black')
 
+  # Plot
   plot <- ggplot(d,aes(mean_H,mean_C,colour=Proteins))+
     ggtitle("Charge VS Hydropathy")+
     theme(plot.title = element_text(hjust = 0.5))+
@@ -123,6 +124,7 @@ chplot <- function(sequences,names) {
           title =element_text(size=12,face='bold'))+
     geom_point(size=3)
 
+  # Stores the plot as an image file, it can be found in the working directory
   dir <- getwd()
   dir <- paste0(dir,'/chplot.png')
   ggsave(dir, width= 9, height= 5)
