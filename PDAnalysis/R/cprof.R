@@ -88,18 +88,25 @@ cprof <- function(sequences,names) {
     array2 <- array(as.numeric(unlist(prof[[i]][[2]])), dim = c(20,1))
     array3 <- array(as.numeric(unlist(prof[[i]][[3]])), dim = c(20,1))
 
+    # Combines them into one array
     prof_array <- rbind(array1,array2,array3)
 
+    # Stores the names of the residues in an object
     residues <- row.names(profile_ref)
 
+    # Stores the names of the reference data sets in an object, each is repeated 20 times
     sets <- rep(c('SwissProt','PDB_S25','DisProt'),each=20)
 
+    # Creates a data frame that can be used to generate a grouped barplot
     profile <- data.frame(freq=prof_array,residues=residues,Set=sets)
 
-    profile$residues <- factor(profile$residues, levels = row.names(profile_ref))
+    # Classifies the names of the residues as factors so that to prevent ggplot from alphabetizing them
+    s = row.names(profile_ref))
 
+    # Stores the name of the protein for the title during each iteration
     title <- paste(names[i],'Compostion Profile',sep=" ")
 
+    # Plot
     plot<-ggplot(profile, aes(x=residues, y=freq, fill=Set))+
       geom_bar(stat="identity", position=position_dodge(),color='black')+
       theme(panel.background = element_rect(fill = "aliceblue",color = "aliceblue"),
@@ -111,7 +118,7 @@ cprof <- function(sequences,names) {
       ggtitle(title)+
       theme(plot.title = element_text(hjust = 0.5),title =element_text(size=12,face='bold'))
 
-
+    # Saves the plot as an image file, it can be found in the working directory
     n <- as.character(i)
     dir <- getwd()
     dir <- paste0(dir,'/cprof_',n,'.png')
