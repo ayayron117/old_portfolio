@@ -2,6 +2,7 @@
 #' @description Plots the residue profile based on reference data sets
 #' @param sequences Character vector of sequences
 #' @param names Character vector of protein names
+#' @export
 #' @examples
 #'
 #' s <- c('MGNHAGKRELNAEKASTNSETNRGESEKKRNLGELSRTTSEDNEVFGEADANQNNGTSSQ
@@ -63,11 +64,11 @@ cprof <- function(sequences,names) {
   Swiss_prof <- list()
   PDB_S25_prof <- list()
   DisProt_prof <- list()
-  prof <- vector(mode = 'list', length = length(s))
+  prof <- vector(mode = 'list', length = length(sequences))
 
   # Calculates the relative frequency of each residue based on each data set and
   # stores them in lists
-  for (i in 1:length(s)) {
+  for (i in 1:length(sequences)) {
 
     Swiss_prof[[i]] <- (freq[i,] - profile_ref[,1])/profile_ref[,1]
 
@@ -81,7 +82,7 @@ cprof <- function(sequences,names) {
 
   }
 
-  for (i in 1:length(s)) {
+  for (i in 1:length(sequences)) {
 
     # Extracts data from the lists and stores them in arrays
     array1 <- array(as.numeric(unlist(prof[[i]][[1]])), dim = c(20,1))
@@ -101,7 +102,7 @@ cprof <- function(sequences,names) {
     profile <- data.frame(freq=prof_array,residues=residues,Set=sets)
 
     # Classifies the names of the residues as factors so that to prevent ggplot from alphabetizing them
-    s = row.names(profile_ref))
+    profile$residues <- factor(profile$residues, levels = row.names(profile_ref))
 
     # Stores the name of the protein for the title during each iteration
     title <- paste(names[i],'Compostion Profile',sep=" ")
