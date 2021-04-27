@@ -63,7 +63,7 @@ GDRGAPKRGSGKDSHHPARTAHYGSLPQKSHGRTQDENPVVHFFKNIVTPRTPPPSQGKG
 RGLSLSRFSWGAEGQRPGFGYGGRASDYKSAHKGFKGVDAQGTLSKIFKLGGRDSRSGSP
 MARR')
 
-names <- c('NFH P12036','NFM P07197','NFL P07196','GFAP P14136','MBP P02686')
+n <- c('NFH P12036','NFM P07197','NFL P07196','GFAP P14136','MBP P02686')
 ```
 
 ``` r
@@ -78,9 +78,9 @@ chplot <- function(sequences,names) {
   # Data frame which contains the charges and hydropathies of each residue
   # (amino acid)
   charge_hydropathy <- data.frame(charge = c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-  0, -1, 0, 0, 0, -1, 1, 0), IDP_hydropathy = c(0.4, 0.355, 1, 0.811, 0.777,
-  0.922, 0.966, 0.711, 0.111, 0.422, 0.7, 0, 0.455, 0.111, 0.111, 0.411, 0.144,
-  0.111, 0.066, 0.322))
+                                             0, -1, 0, 0, 0, -1, 1, 0), IDP_hydropathy = c(0.4, 0.355, 1, 0.811, 0.777,
+                                                                                           0.922, 0.966, 0.711, 0.111, 0.422, 0.7, 0, 0.455, 0.111, 0.111, 0.411, 0.144,
+                                                                                           0.111, 0.066, 0.322))
 
   # Names of each residue
   row.names(charge_hydropathy) <- c('W','Y','I','F','C','L','V','M','N','T',
@@ -163,18 +163,20 @@ chplot <- function(sequences,names) {
   # Stores the values of the mean hydropathy and mean charge in a data frame
   d <- data.frame(mean_H,mean_C,Proteins=names,line_color='black')
 
+  # Plot
   plot <- ggplot(d,aes(mean_H,mean_C,colour=Proteins))+
-  ggtitle("Charge VS Hydropathy")+ 
-  theme(plot.title = element_text(hjust = 0.5))+
-  xlab("Mean Scaled Hydropathy") + 
-  ylab("Absolute Net Charge")+
-  coord_cartesian(xlim = c(0.2,0.65), ylim = c(0,0.65))+
-  geom_point()+
-  geom_segment(aes(x = c(0.4043), y = c(0), xend = c(0.6777), yend = c(0.75)),            color='black')+
-  theme(panel.background = element_rect(fill = "aliceblue",color = "aliceblue"),
-  title =element_text(size=12,face='bold'))+
-  geom_point(size=3)
+    ggtitle("Charge VS Hydropathy")+
+    theme(plot.title = element_text(hjust = 0.5))+
+    xlab("Mean Scaled Hydropathy") +
+    ylab("Absolute Net Charge")+
+    coord_cartesian(xlim = c(0.2,0.65), ylim = c(0,0.65))+
+    geom_point()+
+    geom_segment(aes(x = c(0.4043), y = c(0), xend = c(0.6777), yend = c(0.75)), color='black')+
+    theme(panel.background = element_rect(fill = "aliceblue",color = "aliceblue"),
+          title =element_text(size=12,face='bold'))+
+    geom_point(size=3)
 
+  # Stores the plot as an image file, it can be found in the working directory
   dir <- getwd()
   dir <- paste0(dir,'/chplot.png')
   ggsave(dir, width= 9, height= 5)
@@ -199,11 +201,11 @@ cprof <- function(sequences,names) {
   # in nature, PDB_S25 contains crystalizable proteins, and DisProt contains
   # intrinically disordered proteins.
   profile_ref <- data.frame(SwissProt = c(1.5, 1.13, 5.9, 3.03, 3.96, 9.65, 2.29,
-  6.73, 4.13, 2.38, 5.4, 5.41, 5.35, 6.96, 7.89, 5.92, 3.95, 6.83, 6.67, 4.83),
-  PDB_S25= c(1.74, 1.44, 5.61, 3.5, 3.98, 8.68, 2.41, 6.72, 4.58, 2.22, 4.93,
-  5.63, 5.83, 7.16, 7.7, 6.37, 3.95, 6.19, 6.65, 4.57), DisProt = c(0.8, 0.67,
-  3.24, 2.13, 2.44, 6.22, 1.93, 5.41, 3.82, 1.87, 4.82, 5.56, 5.8, 7.41, 8.1,
-  7.85, 5.27, 8.65, 9.89, 8.11))
+                                          6.73, 4.13, 2.38, 5.4, 5.41, 5.35, 6.96, 7.89, 5.92, 3.95, 6.83, 6.67, 4.83),
+                            PDB_S25= c(1.74, 1.44, 5.61, 3.5, 3.98, 8.68, 2.41, 6.72, 4.58, 2.22, 4.93,
+                                       5.63, 5.83, 7.16, 7.7, 6.37, 3.95, 6.19, 6.65, 4.57), DisProt = c(0.8, 0.67,
+                                                                                                         3.24, 2.13, 2.44, 6.22, 1.93, 5.41, 3.82, 1.87, 4.82, 5.56, 5.8, 7.41, 8.1,
+                                                                                                         7.85, 5.27, 8.65, 9.89, 8.11))
 
   # Names of each residue
   row.names(profile_ref) <- c('C','W','I','Y','F','L','H','V','N','M','R','T',
@@ -233,11 +235,11 @@ cprof <- function(sequences,names) {
   Swiss_prof <- list()
   PDB_S25_prof <- list()
   DisProt_prof <- list()
-  prof <- vector(mode = 'list', length = length(s))
+  prof <- vector(mode = 'list', length = length(sequences))
 
   # Calculates the relative frequency of each residue based on each data set and
   # stores them in lists
-  for (i in 1:length(s)) {
+  for (i in 1:length(sequences)) {
 
     Swiss_prof[[i]] <- (freq[i,] - profile_ref[,1])/profile_ref[,1]
 
@@ -251,57 +253,65 @@ cprof <- function(sequences,names) {
 
   }
 
-  for (i in 1:length(s)) {
+  for (i in 1:length(sequences)) {
 
     # Extracts data from the lists and stores them in arrays
     array1 <- array(as.numeric(unlist(prof[[i]][[1]])), dim = c(20,1))
     array2 <- array(as.numeric(unlist(prof[[i]][[2]])), dim = c(20,1))
     array3 <- array(as.numeric(unlist(prof[[i]][[3]])), dim = c(20,1))
 
-  prof_array <- rbind(array1,array2,array3)
+    # Combines them into one array
+    prof_array <- rbind(array1,array2,array3)
 
-  residues <- row.names(profile_ref)
+    # Stores the names of the residues in an object
+    residues <- row.names(profile_ref)
 
-  sets <- rep(c('SwissProt','PDB_S25','DisProt'),each=20)
+    # Stores the names of the reference data sets in an object, each is repeated 20 times
+    sets <- rep(c('SwissProt','PDB_S25','DisProt'),each=20)
 
-  profile <- data.frame(freq=prof_array,residues=residues,Set=sets)
+    # Creates a data frame that can be used to generate a grouped barplot
+    profile <- data.frame(freq=prof_array,residues=residues,Set=sets)
 
-  profile$residues <- factor(profile$residues, levels = row.names(profile_ref))
-  
-  title <- paste(names[i],'Compostion Profile',sep=" ")
+    # Classifies the names of the residues as factors so that to prevent ggplot from alphabetizing them
+    profile$residues <- factor(profile$residues, levels = row.names(profile_ref))
 
-  plot<-ggplot(profile, aes(x=residues, y=freq, fill=Set))+ 
-  geom_bar(stat="identity", position=position_dodge(),color='black')+
-  theme(panel.background = element_rect(fill = "aliceblue",color = "aliceblue"),
-  panel.grid.major = element_line(size = 0.2, linetype = 'solid', colour = "gray89"), 
-  panel.grid.minor = element_line(size = 0.2, linetype = 'solid', colour = "gray89"))+
-  xlab('Amino Acid')+
-  ylab('Relative Frequency')+
-  ylim(-1.5,2)+
-  ggtitle(title)+
-  theme(plot.title = element_text(hjust = 0.5),title =element_text(size=12,face='bold'))
+    # Stores the name of the protein for the title during each iteration
+    title <- paste(names[i],'Compostion Profile',sep=" ")
 
+    # Plot
+    plot<-ggplot(profile, aes(x=residues, y=freq, fill=Set))+
+      geom_bar(stat="identity", position=position_dodge(),color='black')+
+      theme(panel.background = element_rect(fill = "aliceblue",color = "aliceblue"),
+            panel.grid.major = element_line(size = 0.2, linetype = 'solid', colour = "gray89"),
+            panel.grid.minor = element_line(size = 0.2, linetype = 'solid', colour = "gray89"))+
+      xlab('Amino Acid')+
+      ylab('Relative Frequency')+
+      ylim(-1.5,2)+
+      ggtitle(title)+
+      theme(plot.title = element_text(hjust = 0.5),title =element_text(size=12,face='bold'))
 
-  n <- as.character(i)
-  dir <- getwd()
-  dir <- paste0(dir,'/cprof_',n,'.png')
-  ggsave(dir, width= 9, height= 5)
+    # Saves the plot as an image file, it can be found in the working directory
+    n <- as.character(i)
+    dir <- getwd()
+    dir <- paste0(dir,'/cprof_',n,'.png')
+    ggsave(dir, width= 9, height= 5)
 
-  print(plot)
+    print(plot)
+
+  }
 
 }
 
-}
 ```
 
 ``` r
-chplot(s,names)
+chplot(s,n)
 ```
 
 ![](PDAnalysis_example_functions_displayed_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 ``` r
-cprof(s,names)
+cprof(s,n)
 ```
 
 ![](PDAnalysis_example_functions_displayed_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->![](PDAnalysis_example_functions_displayed_files/figure-gfm/unnamed-chunk-5-2.png)<!-- -->![](PDAnalysis_example_functions_displayed_files/figure-gfm/unnamed-chunk-5-3.png)<!-- -->![](PDAnalysis_example_functions_displayed_files/figure-gfm/unnamed-chunk-5-4.png)<!-- -->![](PDAnalysis_example_functions_displayed_files/figure-gfm/unnamed-chunk-5-5.png)<!-- -->
