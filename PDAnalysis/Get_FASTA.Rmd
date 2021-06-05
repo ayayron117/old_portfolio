@@ -1,0 +1,87 @@
+---
+title: "Get_FASTA"
+author: "Aaron_M"
+date: "6/5/2021"
+output: html_document
+---
+
+```{r}
+
+library(RSelenium)
+library(stringr)
+library(ggplot2)
+library(purrr)
+
+# ID = c("P35527","P15924","Q9UPN3","Q8TDY2","P04264","P08779","Q86YZ3","P02538","P04259","P48668","P13645","P35908","P02533","P58107","Q5D862","Q04695","P13647","Q02413","P14923","Q6UWP8")
+
+ID <- read.csv('ancient_PPIs.csv')
+ID <- as.character(ID$ID)
+
+names <- read.csv('ancient_PPIs_names.csv')
+names <- as.character(names$NAMES)
+
+
+```
+
+
+```{r}
+
+# get.seq <- function() 
+
+rD <- rsDriver(browser="firefox", port=4545L, verbose=F)
+remDr <- rD[["client"]]
+
+fasta <- {}
+
+for (i in 1:length(ID)) {
+  
+remDr$navigate("https://www.uniprot.org/")
+
+# Paste ID into search bar
+remDr$findElement(using = 'id', value = 'query')$sendKeysToElement(list(ID[i]))
+
+# Click search
+remDr$findElements("id", "search-button")[[1]]$clickElement()
+
+Sys.sleep(3)
+
+# Click fasta button (only for the first isoform)
+webElem <- remDr$findElement(using='xpath', "//a[contains(@href,'.fasta')]")
+remDr$executeScript("arguments[0].click();", list(webElem))
+
+Sys.sleep(1)
+
+rm(webElem)
+rm(remDr)
+
+remDr <- rD[["client"]]
+
+webElem <- remDr$findElement(value ='/html/body')
+
+Sys.sleep(1)
+
+fasta[i] <- webElem$getElementText()[[1]]
+
+# Sys.sleep(1)
+# 
+# fasta[i] <- gsub('[\n]','',fasta[i])
+
+}
+
+sequence <- fasta
+sequence <- str_replace(sequence,'.*\n','')
+sequence <- str_replace_all(sequence,'\n','')
+
+fasta <- str_replace(fasta,'\n',' ')
+
+sequence_file = 'ancient_PPIs_sequences.csv'
+fasta_file = 'ancient_PPIs_fastas.txt'
+
+sequence_df <- data.frame(NAMES= names, SEQUENCE=sequence)
+fasta_df <- data.frame(ID= ID, FASTA= fasta)
+
+write.table(sequence_df,sequence_file,sep=",",quote= TRUE,col.names = TRUE, row.names = FALSE)
+
+write.table(fasta, fasta_file,quote= FALSE,eol="\r\n", col.name= FALSE, row.names = FALSE)
+
+```
