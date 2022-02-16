@@ -2,28 +2,23 @@
 % Please edit documentation in R/cprof.R
 \name{cprof}
 \alias{cprof}
-\title{cprof}
+\title{Composition Profile}
 \usage{
-cprof(sequences, names)
+cprof(sequence, ID)
 }
 \arguments{
-\item{sequences}{Character vector of sequences}
+\item{sequence}{Character vector of sequences, do not use FASTA format}
 
-\item{names}{Character vector of protein names}
+\item{ID}{Character vector containing the names of the proteins}
+}
+\value{
+
 }
 \description{
-Plots the residue profile based on reference data sets
+Composition Profile
 }
 \examples{
-
-s <- c('MGNHAGKRELNAEKASTNSETNRGESEKKRNLGELSRTTSEDNEVFGEADANQNNGTSSQ
-DTAVTDSKRTADPKNAWQDAHPADPGSRPHLIRLFSRDAPGREDNTFKDRPSESDELQTI
-QEDSAATSESLDVMASQKRPSQRHGSKYLATASTMDHARHGFLPRHRDTGILDSIGRFFG
-GDRGAPKRGSGKDSHHPARTAHYGSLPQKSHGRTQDENPVVHFFKNIVTPRTPPPSQGKG
-RGLSLSRFSWGAEGQRPGFGYGGRASDYKSAHKGFKGVDAQGTLSKIFKLGGRDSRSGSP
-MARR')
-
-n <- c('MBP P02686')
-
-cprof(s,n)
+\dontrun{
+cprof(PROTEINS$SEQUENCE, PROTEINS$ID)
+}
 }
