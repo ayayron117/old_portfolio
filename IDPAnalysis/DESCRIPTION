@@ -1,0 +1,21 @@
+Package: IDPAnalysis
+Type: Package
+Title: Intrinsically Disordered Protein Analysis
+Version: 1.1.0
+Author: Aaron Mohammed
+Maintainer: Aaron Mohammed <asm496@protonmail.com>
+Description: This package can be used to perform disorder analysis on multiple proteins. All that is needed are the uniprot IDs of the proteins to be analyzed. 
+License: CC0-1.0 License
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    ggplot2,
+    purrr,
+    RSelenium,
+    stringr,
+    UniprotR
+RoxygenNote: 7.1.2
+Suggests: 
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr
