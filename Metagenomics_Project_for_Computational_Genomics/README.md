@@ -1,0 +1,1 @@
+This is a script I wrote for class project. I had to replicate the analysis of a metagenomics paper and present the results in class. The DOI for the paper is https://doi.org/10.1073/pnas.1002601107. 
