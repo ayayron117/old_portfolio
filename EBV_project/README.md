@@ -1,1 +1,1 @@
-This is a script I wrote to anaylze disorder score output for the proteomes of Epstein-Barr virus strains. Disorder scores were obtained from PONDR and IUPred using the PONDR VL-XT, VSL2B, VL3, and IUPred-S, IUPred-L indicators.
+This is a script I wrote to anaylze disorder score output for the proteomes of Epstein-Barr virus strains. Disorder scores were obtained from PONDR and IUPred using the PONDR VL-XT, VSL2B, VL3, and IUPred-S, IUPred-L indicators. I calculated the average MDP scores for each protein in each strain.
