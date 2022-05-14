@@ -1,0 +1,1 @@
+This is a script I wrote while working as an IT research assistant at the Univeristy of South Florida. I was tasked with helping the Auditory & Speech Sciences Laboratory automate the analysis of EEG data. I used MATLAB and a program called Brainstorm to accomplish this. 
