@@ -1,0 +1,560 @@
+---
+title: "Drug_Gene_Correlation"
+author: "Aaron_M"
+date: "6/2/2022"
+output: html_document
+---
+
+```{r}
+
+library(dplyr)
+library(broom)
+library(plyr)
+
+# Import all NCI 60 drug activity data
+raw_NCI60 <- read.csv(file="Drug_Activity.csv")
+
+# Filter the raw data keeping only the most recent experiments for each drug
+raw_NCI60_recent <- raw_NCI60[!rev(duplicated(rev(raw_NCI60$Drug.NAme))),]
+
+# Create a dataframe that includes all drugs with a stdev >= 1 and a max activity value >= 8
+all_drugs <- raw_NCI60_recent[,-c(1:9)]
+row.names(all_drugs) <- paste0("NSC",sep="_", raw_NCI60_recent$NSC..)
+all_drugs_stdev_max <- data.frame(STDEV= apply(all_drugs,1,sd,na.rm=TRUE), Activity_Max = apply(all_drugs,1,max,na.rm = TRUE),FDA_Status= raw_NCI60_recent$FDA.status)
+all_drugs_stdev_max_sorted <- all_drugs_stdev_max[order(all_drugs_stdev_max$STDEV,decreasing = TRUE),]
+all_drugs_top_stdev <- all_drugs_stdev_max_sorted[all_drugs_stdev_max_sorted$STDEV >= 1,]
+all_drugs_top_stdev_max <- all_drugs_top_stdev[all_drugs_top_stdev$Activity_Max >= 8,]
+top_drugs_names <- row.names(all_drugs_top_stdev_max)
+top_drugs <- all_drugs[top_drugs_names,]
+
+# Import processed RNA seq expression data 
+raw_genes <- read.csv(file="RNA_expression.csv")
+# Place RNA seq data into a dataframe
+Genes <- raw_genes[,-c(1:6)]
+rownames(Genes) <- raw_genes$Gene.name.d
+
+# Import processed HuEx data 
+raw_HuEx <- read.csv(file="RNA__Affy_HuEx_1.0_GCRMA.csv")
+#Place Affy HuEx data into dataframe
+HuEx <- raw_HuEx[,-c(1:7)]
+rownames(HuEx) <- paste0(raw_HuEx$Gene.name..d.,sep="_",raw_HuEx$Identifier..c.)
+
+# Import processed agilent mRNA data 
+raw_agilent <- read.csv(file="RNA__Agilent_mRNA_log2.csv")
+# Place RNA seq data into a dataframe
+agilent_mRNA <- raw_agilent[,-c(1:7)]
+rownames(agilent_mRNA) <- raw_agilent$Identifier.c
+
+
+```
+
+```{r}
+
+# Which genes in the RNA seq data set have average expression greater than 1?
+Genes_t <- as.data.frame(t(Genes))
+avg_gene_exp <- as.data.frame(apply(Genes_t,2,mean)) 
+colnames(avg_gene_exp) <- c("Average_Expression")
+loc <- which(avg_gene_exp[1]>1)
+
+# Highly expressed genes
+HE_genes <- Genes_t[,loc]
+
+```
+
+```{r}
+
+# Correlations between drug activity and gene expression
+top_drugs_t <- as.data.frame((t(top_drugs)))
+drug_name <- colnames(top_drugs_t)
+G <- colnames(HE_genes)
+
+options(warn = -1)
+correlations <- lapply(drug_name, function(drug_name,top_drugs_t)
+  { 
+  lapply(G,
+       function(G, HE_genes)
+       {
+         cor.test(as.numeric(top_drugs_t[[drug_name]]), as.numeric(HE_genes[[G]])) %>%
+           tidy()
+       }, HE_genes) %>%
+  bind_rows() %>%
+  mutate(Gene = G) %>%
+  select(Gene, estimate, p.value) %>% as.data.frame()
+  }
+  ,top_drugs_t)
+
+names(correlations) <- drug_name
+
+options(warn = 0)
+
+# Organize correlation values into one dataframe
+top_drug_corrz <- data.frame(matrix(nrow=ncol(HE_genes),ncol=ncol(top_drugs_t)))
+                           
+for (i in 1:length(correlations)) {
+  
+  top_drug_corrz[,i] <- ldply(correlations[[i]][[2]], data.frame)
+} 
+
+colnames(top_drug_corrz) <- colnames(top_drugs_t)
+rownames(top_drug_corrz) <- colnames(HE_genes)
+
+# Organize P values into one dataframe
+top_drug_pvaules <- data.frame(matrix(nrow=ncol(HE_genes),ncol=ncol(top_drugs_t)))
+                           
+for (i in 1:length(correlations)) {
+  
+  top_drug_pvaules[,i] <- ldply(correlations[[i]][[3]], data.frame)
+} 
+
+colnames(top_drug_pvaules) <- colnames(top_drugs_t)
+rownames(top_drug_pvaules) <- colnames(HE_genes)
+
+```
+
+```{r}
+
+max_drug_corrz <- as.data.frame(apply(top_drug_corrz,2,max))
+colnames(max_drug_corrz) <- c("Corr_Max")
+
+drug_stats <- cbind(max_drug_corrz,all_drugs_top_stdev_max)
+drug_stats <- drug_stats[order(drug_stats$Corr_Max, decreasing = TRUE),]
+
+```
+
+```{r}
+
+# Spearman correlations between drug activity and gene expression
+
+top_drugs_t <- as.data.frame((t(top_drugs)))
+drug_name <- colnames(top_drugs_t)
+G <- colnames(HE_genes)
+
+options(warn = -1)
+correlations_spearman <- lapply(drug_name, function(drug_name,top_drugs_t)
+  { 
+  lapply(G,
+       function(G, HE_genes)
+       {
+         cor.test(as.numeric(top_drugs_t[[drug_name]]), as.numeric(HE_genes[[G]]), method="spearman") %>%
+           tidy()
+       }, HE_genes) %>%
+  bind_rows() %>%
+  mutate(Gene = G) %>%
+  select(Gene, estimate, p.value) %>% as.data.frame()
+  }
+  ,top_drugs_t)
+
+names(correlations_spearman) <- drug_name
+
+options(warn = 0)
+
+# Organize correlation values into one dataframe
+top_drug_corrz_spearman <- data.frame(matrix(nrow=ncol(HE_genes),ncol=ncol(top_drugs_t)))
+                           
+for (i in 1:length(correlations_spearman)) {
+  
+  top_drug_corrz_spearman[,i] <- ldply(correlations_spearman[[i]][[2]], data.frame)
+} 
+
+colnames(top_drug_corrz_spearman) <- colnames(top_drugs_t)
+rownames(top_drug_corrz_spearman) <- colnames(HE_genes)
+
+# Organize P values into one dataframe
+top_drug_pvaules_spearman <- data.frame(matrix(nrow=ncol(HE_genes),ncol=ncol(top_drugs_t)))
+                           
+for (i in 1:length(correlations_spearman)) {
+  
+  top_drug_pvaules_spearman[,i] <- ldply(correlations_spearman[[i]][[3]], data.frame)
+} 
+
+colnames(top_drug_pvaules_spearman) <- colnames(top_drugs_t)
+rownames(top_drug_pvaules_spearman) <- colnames(HE_genes)
+
+
+```
+
+```{r}
+
+max_drug_corrz_spear <- as.data.frame(apply(top_drug_corrz_spearman,2,max))
+colnames(max_drug_corrz_spear) <- c("Corr_Max")
+
+drug_stats_spearman <- cbind(max_drug_corrz_spear,all_drugs_top_stdev_max)
+drug_stats_spearman <- drug_stats_spearman[order(drug_stats_spearman$Corr_Max, decreasing = TRUE),]
+
+
+```
+
+```{r}
+
+# Which genes in the affy HuEx data set have average expression greater than or equal to 6?
+HuEx_t <- as.data.frame(t(HuEx))
+avg_HuEx_exp <- as.data.frame(apply(HuEx_t,2,mean)) 
+colnames(avg_HuEx_exp) <- c("Average_Expression")
+loc <- which(avg_gene_exp[1]>=6)
+
+# Highly expressed genes
+HE_HuEx <- HuEx_t[,loc]
+
+# Correlations between drug activity and gene expression
+drug_name <- colnames(top_drugs_t)
+G <- colnames(HE_HuEx)
+
+options(warn = -1)
+HuEx_correlations <- lapply(drug_name, function(drug_name,top_drugs_t)
+  { 
+  lapply(G,
+       function(G, HE_HuEx)
+       {
+         cor.test(as.numeric(top_drugs_t[[drug_name]]), as.numeric(HE_HuEx[[G]])) %>%
+           tidy()
+       }, HE_HuEx) %>%
+  bind_rows() %>%
+  mutate(Gene = G) %>%
+  select(Gene, estimate, p.value) %>% as.data.frame()
+  }
+  ,top_drugs_t)
+
+names(HuEx_correlations) <- drug_name
+
+options(warn = 0)
+
+# Organize correlation values into one dataframe
+HuEx_corrz <- data.frame(matrix(nrow=ncol(HE_HuEx),ncol=ncol(top_drugs_t)))
+                           
+for (i in 1:length(HuEx_correlations)) {
+  
+  HuEx_corrz[,i] <- ldply(HuEx_correlations[[i]][[2]], data.frame)
+} 
+
+colnames(HuEx_corrz) <- colnames(top_drugs_t)
+rownames(HuEx_corrz) <- colnames(HE_HuEx)
+
+# Organize P values into one dataframe
+HuEx_pvalues <- data.frame(matrix(nrow=ncol(HE_HuEx),ncol=ncol(top_drugs_t)))
+                           
+for (i in 1:length(HuEx_correlations)) {
+  
+  HuEx_pvalues[,i] <- ldply(HuEx_correlations[[i]][[3]], data.frame)
+} 
+
+colnames(HuEx_pvalues) <- colnames(top_drugs_t)
+rownames(HuEx_pvalues) <- colnames(HE_HuEx)
+
+```
+
+```{r}
+
+max_HuEx_corrz <- as.data.frame(apply(HuEx_corrz,2,max))
+colnames(max_HuEx_corrz) <- c("Corr_Max")
+
+HuEx_stats <- cbind(max_HuEx_corrz,all_drugs_top_stdev_max)
+HuEx_stats <- HuEx_stats[order(HuEx_stats$Corr_Max, decreasing = TRUE),]
+
+```
+
+```{r}
+
+# Spearman correlations between drug activity and gene expression
+drug_name <- colnames(top_drugs_t)
+G <- colnames(HE_HuEx)
+
+options(warn = -1)
+HuEx_correlations_spearman <- lapply(drug_name, function(drug_name,top_drugs_t)
+  { 
+  lapply(G,
+       function(G, HE_HuEx)
+       {
+         cor.test(as.numeric(top_drugs_t[[drug_name]]), as.numeric(HE_HuEx[[G]]),method="spearman") %>%
+           tidy()
+       }, HE_HuEx) %>%
+  bind_rows() %>%
+  mutate(Gene = G) %>%
+  select(Gene, estimate, p.value) %>% as.data.frame()
+  }
+  ,top_drugs_t)
+
+names(HuEx_correlations_spearman) <- drug_name
+
+options(warn = 0)
+
+# Organize correlation values into one dataframe
+HuEx_corrz_spearman <- data.frame(matrix(nrow=ncol(HE_HuEx),ncol=ncol(top_drugs_t)))
+                           
+for (i in 1:length(HuEx_correlations_spearman)) {
+  
+  HuEx_corrz_spearman[,i] <- ldply(HuEx_correlations_spearman[[i]][[2]], data.frame)
+} 
+
+colnames(HuEx_corrz_spearman) <- colnames(top_drugs_t)
+rownames(HuEx_corrz_spearman) <- colnames(HE_HuEx)
+
+# Organize P values into one dataframe
+HuEx_pvalues_spearman <- data.frame(matrix(nrow=ncol(HE_HuEx),ncol=ncol(top_drugs_t)))
+                           
+for (i in 1:length(HuEx_correlations_spearman)) {
+  
+  HuEx_pvalues_spearman[,i] <- ldply(HuEx_correlations_spearman[[i]][[3]], data.frame)
+} 
+
+colnames(HuEx_pvalues_spearman) <- colnames(top_drugs_t)
+rownames(HuEx_pvalues_spearman) <- colnames(HE_HuEx)
+
+```
+
+```{r}
+
+max_HuEx_corrz_spearman <- as.data.frame(apply(HuEx_corrz_spearman,2,max))
+colnames(max_HuEx_corrz_spearman) <- c("Corr_Max")
+
+HuEx_stats_spearman <- cbind(max_HuEx_corrz_spearman,all_drugs_top_stdev_max)
+HuEx_stats_spearman <- HuEx_stats_spearman[order(HuEx_stats_spearman$Corr_Max, decreasing = TRUE),]
+
+```
+
+```{r}
+
+# Which genes in the agilent mRNA data set have average expression greater than or equal to 2?
+agilent_mRNA_t <- as.data.frame(t(agilent_mRNA))
+avg_agilent_mRNA_exp <- as.data.frame(apply(agilent_mRNA_t,2,mean)) 
+colnames(avg_agilent_mRNA_exp) <- c("Average_Expression")
+loc <- which(avg_agilent_mRNA_exp[1]>=5)
+
+# Highly expressed genes
+HE_agilent_mRNA <- agilent_mRNA_t[,loc]
+
+# Correlations between drug activity and gene expression
+drug_name <- colnames(top_drugs_t)
+G <- colnames(HE_agilent_mRNA)
+
+options(warn = -1)
+agilent_mRNA_correlations <- lapply(drug_name, function(drug_name,top_drugs_t)
+  { 
+  lapply(G,
+       function(G, HE_agilent_mRNA)
+       {
+         cor.test(as.numeric(top_drugs_t[[drug_name]]), as.numeric(HE_agilent_mRNA[[G]])) %>%
+           tidy()
+       }, HE_agilent_mRNA) %>%
+  bind_rows() %>%
+  mutate(Gene = G) %>%
+  select(Gene, estimate, p.value) %>% as.data.frame()
+  }
+  ,top_drugs_t)
+
+names(agilent_mRNA_correlations) <- drug_name
+
+options(warn = 0)
+
+# Organize correlation values into one dataframe
+agilent_mRNA_corrz <- data.frame(matrix(nrow=ncol(HE_agilent_mRNA),ncol=ncol(top_drugs_t)))
+                           
+for (i in 1:length(agilent_mRNA_correlations)) {
+  
+  agilent_mRNA_corrz[,i] <- ldply(agilent_mRNA_correlations[[i]][[2]], data.frame)
+} 
+
+colnames(agilent_mRNA_corrz) <- colnames(top_drugs_t)
+rownames(agilent_mRNA_corrz) <- colnames(HE_agilent_mRNA)
+
+# Organize P values into one dataframe
+agilent_mRNA_pvalues <- data.frame(matrix(nrow=ncol(HE_agilent_mRNA),ncol=ncol(top_drugs_t)))
+                           
+for (i in 1:length(agilent_mRNA_correlations)) {
+  
+  agilent_mRNA_pvalues[,i] <- ldply(agilent_mRNA_correlations[[i]][[3]], data.frame)
+} 
+
+colnames(agilent_mRNA_pvalues) <- colnames(top_drugs_t)
+rownames(agilent_mRNA_pvalues) <- colnames(HE_agilent_mRNA)
+
+```
+
+```{r}
+
+max_agilent_mRNA_corrz <- as.data.frame(apply(agilent_mRNA_corrz,2,max))
+colnames(max_agilent_mRNA_corrz) <- c("Corr_Max")
+
+agilent_stats <- cbind(max_agilent_mRNA_corrz,all_drugs_top_stdev_max)
+agilent_stats <- agilent_stats[order(agilent_stats$Corr_Max, decreasing = TRUE),]
+
+```
+
+```{r}
+
+# Which genes in the agilent mRNA data set have average expression greater than or equal to 2?
+agilent_mRNA_t <- as.data.frame(t(agilent_mRNA))
+avg_agilent_mRNA_exp <- as.data.frame(apply(agilent_mRNA_t,2,mean)) 
+colnames(avg_agilent_mRNA_exp) <- c("Average_Expression")
+loc <- which(avg_agilent_mRNA_exp[1]>=5)
+
+# Highly expressed genes
+HE_agilent_mRNA <- agilent_mRNA_t[,loc]
+
+# Correlations between drug activity and gene expression
+drug_name <- colnames(top_drugs_t)
+G <- colnames(HE_agilent_mRNA)
+
+options(warn = -1)
+agilent_mRNA_correlations_spearman <- lapply(drug_name, function(drug_name,top_drugs_t)
+  { 
+  lapply(G,
+       function(G, HE_agilent_mRNA)
+       {
+         cor.test(as.numeric(top_drugs_t[[drug_name]]), as.numeric(HE_agilent_mRNA[[G]]),method="spearman") %>%
+           tidy()
+       }, HE_agilent_mRNA) %>%
+  bind_rows() %>%
+  mutate(Gene = G) %>%
+  select(Gene, estimate, p.value) %>% as.data.frame()
+  }
+  ,top_drugs_t)
+
+names(agilent_mRNA_correlations_spearman) <- drug_name
+
+options(warn = 0)
+
+# Organize correlation values into one dataframe
+agilent_mRNA_corrz_spearman <- data.frame(matrix(nrow=ncol(HE_agilent_mRNA),ncol=ncol(top_drugs_t)))
+                           
+for (i in 1:length(agilent_mRNA_correlations_spearman)) {
+  
+  agilent_mRNA_corrz_spearman[,i] <- ldply(agilent_mRNA_correlations_spearman[[i]][[2]], data.frame)
+} 
+
+colnames(agilent_mRNA_corrz_spearman) <- colnames(top_drugs_t)
+rownames(agilent_mRNA_corrz_spearman) <- colnames(HE_agilent_mRNA)
+
+# Organize P values into one dataframe
+agilent_mRNA_pvalues_spearman <- data.frame(matrix(nrow=ncol(HE_agilent_mRNA),ncol=ncol(top_drugs_t)))
+                           
+for (i in 1:length(agilent_mRNA_correlations_spearman)) {
+  
+  agilent_mRNA_pvalues_spearman[,i] <- ldply(agilent_mRNA_correlations_spearman[[i]][[3]], data.frame)
+} 
+
+colnames(agilent_mRNA_pvalues_spearman) <- colnames(top_drugs_t)
+rownames(agilent_mRNA_pvalues_spearman) <- colnames(HE_agilent_mRNA)
+
+```
+
+```{r}
+
+max_agilent_mRNA_corrz_spearman <- as.data.frame(apply(agilent_mRNA_corrz_spearman,2,max))
+colnames(max_agilent_mRNA_corrz_spearman) <- c("Corr_Max")
+
+agilent_stats_spearman <- cbind(max_agilent_mRNA_corrz_spearman,all_drugs_top_stdev_max)
+agilent_stats_spearman <- agilent_stats_spearman[order(agilent_stats_spearman$Corr_Max, decreasing = TRUE),]
+
+```
+
+```{r}
+
+write.csv(drug_stats,file = "~/Documents/NCI-60/drug_stats.csv")
+write.csv(drug_stats_spearman,file = "~/Documents/NCI-60/stats/drug_stats_spearman.csv")
+write.csv(HuEx_stats,file = "~/Documents/NCI-60/stats/HuEx_stats.csv")
+write.csv(HuEx_stats_spearman,file = "~/Documents/NCI-60/stats/HuEx_stats_spearman.csv")
+write.csv(agilent_stats,file = "~/Documents/NCI-60/stats/agilent_stats.csv")
+write.csv(agilent_stats_spearman,file = "~/Documents/NCI-60/stats/agilent_stats_spearman.csv")
+
+
+```
+
+```{r}
+
+create.xlsx <- function(drug, dataset) {
+out <- as.data.frame(dataset[,drug])
+colnames(out) <- c(drug)
+rownames(out) <- rownames(dataset)
+out <- as.data.frame(out[order(out[1], decreasing=TRUE), ,drop = FALSE])
+out <- cbind(" "=rownames(out), out)
+return(out)
+}
+
+```
+
+```{r}
+
+NSC_764134 <- create.xlsx("NSC_764134",top_drug_corrz)
+NSC_764134_s <- create.xlsx("NSC_764134",top_drug_corrz_spearman)
+NSC_764134_HuEx <- create.xlsx("NSC_764134",HuEx_corrz)
+NSC_764134_HuEx_s <- create.xlsx("NSC_764134",HuEx_corrz_spearman)
+NSC_764134_agilent <- create.xlsx("NSC_764134",agilent_mRNA_corrz)
+NSC_764134_agilent_s <- create.xlsx("NSC_764134",agilent_mRNA_corrz_spearman)
+
+dfs <- list(NSC_764134,NSC_764134_s,NSC_764134_HuEx,NSC_764134_HuEx_s,NSC_764134_agilent,NSC_764134_agilent_s)
+
+names(dfs) <- c("RNA_seq", "RNA_seq_spearman", "Affy_HuEx", "Affy_HuEx_spearman", "Agilent_mRNA", "Agilent_mRNA_spearman")
+
+writexl::write_xlsx(dfs,path="~/Documents/NCI-60/NSC_764134_all.xlsx")
+
+```
+
+```{r}
+
+NSC_778304 <- create.xlsx("NSC_778304",top_drug_corrz)
+NSC_778304_s <- create.xlsx("NSC_778304",top_drug_corrz_spearman)
+NSC_778304_HuEx <- create.xlsx("NSC_778304",HuEx_corrz)
+NSC_778304_HuEx_s <- create.xlsx("NSC_778304",HuEx_corrz_spearman)
+NSC_778304_agilent <- create.xlsx("NSC_778304",agilent_mRNA_corrz)
+NSC_778304_agilent_s <- create.xlsx("NSC_778304",agilent_mRNA_corrz_spearman)
+
+dfs <- list(NSC_778304,NSC_778304_s,NSC_778304_HuEx,NSC_778304_HuEx_s,NSC_778304_agilent,NSC_778304_agilent_s)
+
+names(dfs) <- c("RNA_seq", "RNA_seq_spearman", "Affy_HuEx", "Affy_HuEx_spearman", "Agilent_mRNA", "Agilent_mRNA_spearman")
+
+writexl::write_xlsx(dfs,path="~/Documents/NCI-60/NSC_778304_all.xlsx")
+
+```
+
+```{r}
+
+NSC_764042 <- create.xlsx("NSC_764042",top_drug_corrz)
+NSC_764042_s <- create.xlsx("NSC_764042",top_drug_corrz_spearman)
+NSC_764042_HuEx <- create.xlsx("NSC_764042",HuEx_corrz)
+NSC_764042_HuEx_s <- create.xlsx("NSC_764042",HuEx_corrz_spearman)
+NSC_764042_agilent <- create.xlsx("NSC_764042",agilent_mRNA_corrz)
+NSC_764042_agilent_s <- create.xlsx("NSC_764042",agilent_mRNA_corrz_spearman)
+
+dfs <- list(NSC_764042,NSC_764042_s,NSC_764042_HuEx,NSC_764042_HuEx_s,NSC_764042_agilent,NSC_764042_agilent_s)
+
+names(dfs) <- c("RNA_seq", "RNA_seq_spearman", "Affy_HuEx", "Affy_HuEx_spearman", "Agilent_mRNA", "Agilent_mRNA_spearman")
+
+writexl::write_xlsx(dfs,path="~/Documents/NCI-60/NSC_764042_all.xlsx")
+
+```
+
+```{r}
+
+NSC_226080 <- create.xlsx("NSC_226080",top_drug_corrz)
+NSC_226080_s <- create.xlsx("NSC_226080",top_drug_corrz_spearman)
+NSC_226080_HuEx <- create.xlsx("NSC_226080",HuEx_corrz)
+NSC_226080_HuEx_s <- create.xlsx("NSC_226080",HuEx_corrz_spearman)
+NSC_226080_agilent <- create.xlsx("NSC_226080",agilent_mRNA_corrz)
+NSC_226080_agilent_s <- create.xlsx("NSC_226080",agilent_mRNA_corrz_spearman)
+
+dfs <- list(NSC_226080,NSC_226080_s,NSC_226080_HuEx,NSC_226080_HuEx_s,NSC_226080_agilent,NSC_226080_agilent_s)
+
+names(dfs) <- c("RNA_seq", "RNA_seq_spearman", "Affy_HuEx", "Affy_HuEx_spearman", "Agilent_mRNA", "Agilent_mRNA_spearman")
+
+writexl::write_xlsx(dfs,path="~/Documents/NCI-60/NSC_226080_all.xlsx")
+
+```
+
+```{r}
+
+NSC_683864 <- create.xlsx("NSC_683864",top_drug_corrz)
+NSC_683864_s <- create.xlsx("NSC_683864",top_drug_corrz_spearman)
+NSC_683864_HuEx <- create.xlsx("NSC_683864",HuEx_corrz)
+NSC_683864_HuEx_s <- create.xlsx("NSC_683864",HuEx_corrz_spearman)
+NSC_683864_agilent <- create.xlsx("NSC_683864",agilent_mRNA_corrz)
+NSC_683864_agilent_s <- create.xlsx("NSC_683864",agilent_mRNA_corrz_spearman)
+
+dfs <- list(NSC_683864,NSC_683864_s,NSC_683864_HuEx,NSC_683864_HuEx_s,NSC_683864_agilent,NSC_683864_agilent_s)
+
+names(dfs) <- c("RNA_seq", "RNA_seq_spearman", "Affy_HuEx", "Affy_HuEx_spearman", "Agilent_mRNA", "Agilent_mRNA_spearman")
+
+writexl::write_xlsx(dfs,path="~/Documents/NCI-60/NSC_683864_all.xlsx")
+
+```
+
+
