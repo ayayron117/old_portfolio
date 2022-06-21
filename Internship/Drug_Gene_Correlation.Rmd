@@ -557,4 +557,93 @@ writexl::write_xlsx(dfs,path="~/Documents/NCI-60/NSC_683864_all.xlsx")
 
 ```
 
+```{r}
+
+NSC_733504 <- create.xlsx("NSC_733504",top_drug_corrz)
+NSC_733504_s <- create.xlsx("NSC_733504",top_drug_corrz_spearman)
+NSC_733504_HuEx <- create.xlsx("NSC_733504",HuEx_corrz)
+NSC_733504_HuEx_s <- create.xlsx("NSC_733504",HuEx_corrz_spearman)
+NSC_733504_agilent <- create.xlsx("NSC_733504",agilent_mRNA_corrz)
+NSC_733504_agilent_s <- create.xlsx("NSC_733504",agilent_mRNA_corrz_spearman)
+
+dfs <- list(NSC_733504,NSC_733504_s,NSC_733504_HuEx,NSC_733504_HuEx_s,NSC_733504_agilent,NSC_733504_agilent_s)
+
+names(dfs) <- c("RNA_seq", "RNA_seq_spearman", "Affy_HuEx", "Affy_HuEx_spearman", "Agilent_mRNA", "Agilent_mRNA_spearman")
+
+writexl::write_xlsx(dfs,path="~/Documents/NCI-60/NSC_733504_all.xlsx")
+
+
+```
+
+```{r}
+
+NSC_778590 <- create.xlsx("NSC_778590",top_drug_corrz)
+NSC_778590_s <- create.xlsx("NSC_778590",top_drug_corrz_spearman)
+NSC_778590_HuEx <- create.xlsx("NSC_778590",HuEx_corrz)
+NSC_778590_HuEx_s <- create.xlsx("NSC_778590",HuEx_corrz_spearman)
+NSC_778590_agilent <- create.xlsx("NSC_778590",agilent_mRNA_corrz)
+NSC_778590_agilent_s <- create.xlsx("NSC_778590",agilent_mRNA_corrz_spearman)
+
+dfs <- list(NSC_778590,NSC_778590_s,NSC_778590_HuEx,NSC_778590_HuEx_s,NSC_778590_agilent,NSC_778590_agilent_s)
+
+names(dfs) <- c("RNA_seq", "RNA_seq_spearman", "Affy_HuEx", "Affy_HuEx_spearman", "Agilent_mRNA", "Agilent_mRNA_spearman")
+
+writexl::write_xlsx(dfs,path="~/Documents/NCI-60/NSC_778590_all.xlsx")
+
+```
+
+```{r}
+
+NSC_758664 <- create.xlsx("NSC_758664",top_drug_corrz)
+NSC_758664_s <- create.xlsx("NSC_758664",top_drug_corrz_spearman)
+NSC_758664_HuEx <- create.xlsx("NSC_758664",HuEx_corrz)
+NSC_758664_HuEx_s <- create.xlsx("NSC_758664",HuEx_corrz_spearman)
+NSC_758664_agilent <- create.xlsx("NSC_758664",agilent_mRNA_corrz)
+NSC_758664_agilent_s <- create.xlsx("NSC_758664",agilent_mRNA_corrz_spearman)
+
+dfs <- list(NSC_758664,NSC_758664_s,NSC_758664_HuEx,NSC_758664_HuEx_s,NSC_758664_agilent,NSC_758664_agilent_s)
+
+names(dfs) <- c("RNA_seq", "RNA_seq_spearman", "Affy_HuEx", "Affy_HuEx_spearman", "Agilent_mRNA", "Agilent_mRNA_spearman")
+
+writexl::write_xlsx(dfs,path="~/Documents/NCI-60/NSC_758664_all.xlsx")
+
+```
+
+```{r}
+
+NSC_760087 <- create.xlsx("NSC_760087",top_drug_corrz)
+NSC_760087_s <- create.xlsx("NSC_760087",top_drug_corrz_spearman)
+NSC_760087_HuEx <- create.xlsx("NSC_760087",HuEx_corrz)
+NSC_760087_HuEx_s <- create.xlsx("NSC_760087",HuEx_corrz_spearman)
+NSC_760087_agilent <- create.xlsx("NSC_760087",agilent_mRNA_corrz)
+NSC_760087_agilent_s <- create.xlsx("NSC_760087",agilent_mRNA_corrz_spearman)
+
+dfs <- list(NSC_760087,NSC_760087_s,NSC_760087_HuEx,NSC_760087_HuEx_s,NSC_760087_agilent,NSC_760087_agilent_s)
+
+names(dfs) <- c("RNA_seq", "RNA_seq_spearman", "Affy_HuEx", "Affy_HuEx_spearman", "Agilent_mRNA", "Agilent_mRNA_spearman")
+
+writexl::write_xlsx(dfs,path="~/Documents/NCI-60/NSC_760087_all.xlsx")
+
+```
+
+```{r}
+
+Top_FDA_names <- c("NSC_764134", "NSC_758664", "NSC_778590", "NSC_733504", "NSC_683864", "NSC_226080", "NSC_764042", "NSC_778304", "NSC_760087")
+
+Top_FDA <- top_drugs[Top_FDA_names,]
+
+#Top_FDA[is.na(Top_FDA)] <- 0
+d <- dist(Top_FDA)
+hc <- hclust(d)
+png("cluster.png")
+plot(hc)
+dev.off()
+
+```
+
+
+
+
+
+
 
