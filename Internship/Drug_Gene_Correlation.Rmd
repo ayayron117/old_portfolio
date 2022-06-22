@@ -641,6 +641,76 @@ dev.off()
 
 ```
 
+```{r}
+
+BRAF_drugs_names <- c(76653,73955,69732)
+BRAF_drugs <- raw_NCI60[BRAF_drugs_names,]
+BRAF_drugs_annot <- BRAF_drugs[,c(1:9)]
+BRAF_drugs <- BRAF_drugs[,-c(1:9)]
+row.names(BRAF_drugs) <- paste0("NSC",sep="_", BRAF_drugs_annot$NSC..)
+
+# Correlations between drug activity and gene expression
+BRAF_drugs_t <- as.data.frame((t(BRAF_drugs)))
+drug_name <- colnames(BRAF_drugs_t)
+G <- colnames(HE_genes)
+
+options(warn = -1)
+BRAF_correlations <- lapply(drug_name, function(drug_name,BRAF_drugs_t)
+  { 
+  lapply(G,
+       function(G, HE_genes)
+       {
+         cor.test(as.numeric(BRAF_drugs_t[[drug_name]]), as.numeric(HE_genes[[G]])) %>%
+           tidy()
+       }, HE_genes) %>%
+  bind_rows() %>%
+  mutate(Gene = G) %>%
+  select(Gene, estimate, p.value) %>% as.data.frame()
+  }
+  ,BRAF_drugs_t)
+
+names(BRAF_correlations) <- drug_name
+
+options(warn = 0)
+
+# Organize correlation values into one dataframe
+BRAF_corrz <- data.frame(matrix(nrow=ncol(HE_genes),ncol=ncol(BRAF_drugs_t)))
+                           
+for (i in 1:length(BRAF_correlations)) {
+  
+  BRAF_corrz[,i] <- ldply(BRAF_correlations[[i]][[2]], data.frame)
+} 
+
+colnames(BRAF_corrz) <- colnames(BRAF_drugs_t)
+rownames(BRAF_corrz) <- colnames(HE_genes)
+
+# Organize P values into one dataframe
+BRAF_pvaules <- data.frame(matrix(nrow=ncol(HE_genes),ncol=ncol(BRAF_drugs_t)))
+                           
+for (i in 1:length(BRAF_correlations)) {
+  
+  BRAF_pvaules[,i] <- ldply(BRAF_correlations[[i]][[3]], data.frame)
+} 
+
+colnames(BRAF_pvaules) <- colnames(BRAF_drugs_t)
+rownames(BRAF_pvaules) <- colnames(HE_genes)
+
+
+```
+
+```{r}
+
+NSC_761431 <- create.xlsx("NSC_761431",BRAF_corrz)
+NSC_747971 <- create.xlsx("NSC_747971",BRAF_corrz)
+NSC_724772 <- create.xlsx("NSC_724772",BRAF_corrz)
+
+dfs <- list(NSC_761431, NSC_747971, NSC_724772)
+names(dfs) <- c("NSC_761431","NSC_747971","NSC_724772")
+
+writexl::write_xlsx(dfs,path="~/Documents/NCI-60/BRAF_correlations.xlsx")
+
+```
+
 
 
 
