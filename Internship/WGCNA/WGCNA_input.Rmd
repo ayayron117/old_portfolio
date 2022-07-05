@@ -1,0 +1,111 @@
+---
+title: "WGCNA"
+output: html_document
+date: '2022-06-29'
+---
+
+```{r}
+
+library(WGCNA)
+
+options(stringsAsFactors = FALSE);
+phen0 = read.csv("NCI60_phen.csv");
+
+data0=read.csv(file="RNA_expression.csv")
+data1=data0[,-c(1:6)]
+rownames(data1)=data0[,2]
+
+# Gene symbol
+symbol1=data0[,1:6]
+write.csv(symbol1,file="gene_symbol_map.csv")
+
+# Remove MT Ribosome
+id=grep("^MT",symbol1[,1])
+id1=grep("^RPS",symbol1[,1])
+id2=grep("^RPL",symbol1[,1])
+
+data2=data1[-c(id,id1,id2),]
+symbol2=symbol1[-c(id,id1,id2),]
+
+```
+
+```{r}
+# Normalization
+reads_sum=apply(data2,2,sum)
+data3=data2
+for(i in 1:ncol(data2))
+{
+	data3[,i]=data2[,i]*40000/reads_sum[i]
+}
+apply(data3,2,sum)
+data3[1:3,]
+
+```
+
+```{r}
+
+# Log2(rpkm+1)
+data4=log2(data3+1)
+boxplot(data4)
+symbol4=symbol2
+
+```
+
+```{r}
+
+# Remove low express genes, RPKM>1
+exp_mean=apply(data4,1,mean)
+id1=which(exp_mean>1)
+length(id1)
+data5=data4[id1,]
+symbol5=symbol4[id1,]
+
+sd_mean=apply(data5,1,sd)
+exp_mean=apply(data5,1,mean)
+hist(sd_mean/exp_mean)
+id2=which(sd_mean/exp_mean>0.2)
+length(id2)
+data6=data5[id2,]
+symbol6=symbol5[id2,]
+phen6=phen0
+
+cbind(symbol6,rownames(data6))
+
+# Final files data6, phen6, symbol6
+#save(data6,phen6,symbol6,file="step1.Rdata")
+datExpr0= t(data6);
+
+
+gsg = goodSamplesGenes(datExpr0, verbose = 3);
+gsg$allOK
+
+```
+
+```{r}
+
+# H cluster analysis
+sampleTree = hclust(dist(datExpr0), method = "average");
+# Plot the sample tree: Open a graphic output window of size 12 by 9 inches
+# The user should change the dimensions if the window is too large or too small.
+sizeGrWindow(12,9)
+#pdf(file = "Plots/sampleClustering.pdf", width = 12, height = 9);
+par(cex = 0.6);
+par(mar = c(0,4,2,0))
+plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5,
+     cex.axis = 1.5, cex.main = 2)
+
+```
+
+```{r}
+
+collectGarbage();
+
+datExpr=t(data6)
+datTraits=phen6
+rownames(datTraits)=row.names(datExpr)
+
+save(datExpr, datTraits, symbol6,file = "WGCNA_input.RData")
+
+```
+
+
