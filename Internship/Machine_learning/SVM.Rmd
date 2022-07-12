@@ -9,53 +9,145 @@ date: '2022-07-01'
 library(e1071)
 library(caTools)
 
-act0=read.csv(file="764042_activity.csv",row.names=1)
-me0=read.csv(file="MEs.csv",row.names=1)
-#cbind(rownames(me0),rownames(act0))
+raw_act <- read.csv(file="764042_activity.csv",row.names=1)
+raw_ME <- read.csv(file="MEs.csv",row.names=1)
 
 # Remove NA
-id=which(!is.na(act0[,1]))
-act1=act0[id,1]
-me1=me0[id,]
-
-
-# 
-# cor_exp_act=rep(NA,ncol(me1))
-# for(i in 1:ncol(me1))
-# {
-# cor_exp_act[i]=cor.test(act1,me1[,i])$estimate
-# }
-
+id <- which(!is.na(raw_act[,1]))
+activity <- raw_act[id,1]
+MEs <- raw_ME[id,]
 
 # Indicator
-ind1=rep(0,length(act1))
-id=which(act1>6)
-ind1[id]=1
-ind1=as.factor(ind1)
-#cbind(act1,ind1)
+indicator <- rep(0,length(activity))
+id <- which(activity>6)
+indicator[id] <- 1
+indicator <- as.factor(indicator)
 
+SVM <- function (dat) {
+  accuracy_all <- rep(NA,10)
+  
+    for(k in 1:10000) {
+    id <- sample.int(nrow(dat), 46)
 
+    training <- dat[id,]
+    test <- dat[-id,]
 
-dat = data.frame(me1[,c(5,3)], y = ind1)
+    classifier <- svm(formula = y ~ ., data = training, 
+                     type = 'C-classification', kernel = 'radial')
+    y_pred <- predict(classifier, newdata = test[,-3])
 
-accuracy_all=rep(NA,10)
-for(i in 1:100)
-{
-id=sample.int(nrow(dat), 46)
+    cm <- table(test[, 3], y_pred)
+    accuracy_all[k] <- (cm[1,1] + cm[2,2]) / (cm[1,1] + cm[2,2] + cm[1,2] + cm[2,1])
+    }
 
-training1=dat[id,]
-test1=dat[-id,]
-
-dim(training1)
-dim(test1)
-
-classifier = svm(formula = y ~ ., data = training1, type = 'C-classification', kernel = 'radial')
-y_pred = predict(classifier, newdata = test1[,-3])
-
-cm = table(test1[, 3], y_pred)
-cm
-accuracy_all[i] = (cm[1,1] + cm[2,2]) / (cm[1,1] + cm[2,2] + cm[1,2] + cm[2,1])
+  m <- mean(accuracy_all)
+  return(m)
 }
-mean(accuracy_all)
+
+EG_combinations <- combn(MEs,2,simplify = FALSE)
+avg_accuracies <- {}
+names <- {}
+
+for (i in 1:length(EG_combinations)) {
+  dat <- data.frame(EG_combinations[[i]], y = indicator)
+  cnames <- colnames(EG_combinations[[i]])
+  names[i] <- capture.output(cat(cnames, sep= "_"))
+  avg_accuracies[i] <- SVM(dat)
+}
+
+avg_acc <- data.frame(AVG_Accuracy = avg_accuracies, row.names = names)
+
+avg_acc_764042 <- avg_acc[order(avg_acc$AVG_Accuracy, decreasing = TRUE),,drop=FALSE]
+
+avg_acc_764042_df <- data.frame(MEs = row.names(avg_acc_764042), AVG_Activity = avg_acc_764042[,1])
 
 ```
+
+```{r}
+
+raw_act <- read.csv(file="741078_activity.csv",row.names=1)
+raw_ME <- read.csv(file="MEs.csv",row.names=1)
+
+# Remove NA
+id <- which(!is.na(raw_act[,1]))
+activity <- raw_act[id,1]
+MEs <- raw_ME[id,]
+
+# Indicator
+indicator <- rep(0,length(activity))
+id <- which(activity>6)
+indicator[id] <- 1
+indicator <- as.factor(indicator)
+
+EG_combinations <- combn(MEs,2,simplify = FALSE)
+avg_accuracies <- {}
+names <- {}
+
+for (i in 1:length(EG_combinations)) {
+  dat <- data.frame(EG_combinations[[i]], y = indicator)
+  cnames <- colnames(EG_combinations[[i]])
+  names[i] <- capture.output(cat(cnames, sep= "_"))
+  avg_accuracies[i] <- SVM(dat)
+}
+
+avg_acc <- data.frame(AVG_Accuracy = avg_accuracies, row.names = names)
+
+avg_acc_741078 <- avg_acc[order(avg_acc$AVG_Accuracy, decreasing = TRUE),,drop=FALSE]
+
+avg_acc_741078_df <- data.frame(MEs = row.names(avg_acc_741078), AVG_Activity = avg_acc_741078[,1])
+
+```
+
+```{r}
+
+
+raw_act <- read.csv(file="768068_activity.csv",row.names=1)
+raw_ME <- read.csv(file="MEs.csv",row.names=1)
+
+# Remove NA
+id <- which(!is.na(raw_act[,1]))
+activity <- raw_act[id,1]
+MEs <- raw_ME[id,]
+
+# Indicator
+indicator <- rep(0,length(activity))
+id <- which(activity>6)
+indicator[id] <- 1
+indicator <- as.factor(indicator)
+
+EG_combinations <- combn(MEs,2,simplify = FALSE)
+avg_accuracies <- {}
+names <- {}
+
+for (i in 1:length(EG_combinations)) {
+  dat <- data.frame(EG_combinations[[i]], y = indicator)
+  cnames <- colnames(EG_combinations[[i]])
+  names[i] <- capture.output(cat(cnames, sep= "_"))
+  avg_accuracies[i] <- SVM(dat)
+}
+
+avg_acc <- data.frame(AVG_Accuracy = avg_accuracies, row.names = names)
+
+avg_acc_768068 <- avg_acc[order(avg_acc$AVG_Accuracy, decreasing = TRUE),,drop=FALSE]
+
+avg_acc_768068_df <- data.frame(MEs = row.names(avg_acc_768068), AVG_Activity = avg_acc_768068[,1])
+
+```
+
+```{r}
+
+dfs <- list(avg_acc_764042_df,avg_acc_741078_df,avg_acc_768068_df)
+
+names(dfs) <- c("NSC_764042","NSC_741078","NSC_768068")
+
+writexl::write_xlsx(dfs,path="~/Documents/Git_Hub/Portfolio/Internship/Machine_learning/SVM_accuracies.xlsx")
+
+```
+
+
+
+
+
+
+
+
