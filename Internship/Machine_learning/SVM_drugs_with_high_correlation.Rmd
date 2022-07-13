@@ -9,7 +9,7 @@ date: '2022-07-01'
 library(e1071)
 library(caTools)
 
-raw_act <- read.csv(file="764042_activity.csv",row.names=1)
+raw_act <- read.csv(file="764134_activity.csv",row.names=1)
 raw_ME <- read.csv(file="MEs.csv",row.names=1)
 
 # Remove NA
@@ -19,7 +19,7 @@ MEs <- raw_ME[id,]
 
 # Indicator
 indicator <- rep(0,length(activity))
-id <- which(activity>6.5)
+id <- which(activity>7)
 indicator[id] <- 1
 indicator <- as.factor(indicator)
 
@@ -33,10 +33,8 @@ SVM_ <- function (dat,percent_traning,ncycles) {
   
     for(k in 1:ncycles) {
     id <- sample.int(nrow(dat), floor(length(activity) * percent_traning/100))
-
     training <- dat[id,]
     test <- dat[-id,]
-
     classifier <- svm(formula = y ~ ., data = training, 
                      type = 'C-classification', kernel = 'linear')
     y_pred <- predict(classifier, newdata = test[,-3])
@@ -73,17 +71,16 @@ for (i in 1:length(EG_combinations)) {
   dat <- data.frame(EG_combinations[[i]], y = indicator)
   cnames <- colnames(EG_combinations[[i]])
   names[i] <- capture.output(cat(cnames, sep= "_"))
-  results[i,] <- SVM_(dat,70,10000)
+  results[i,] <- SVM_(dat,80,10000) #########change back to 10000
 }
 
 row.names(results) <- names
 
-results_764042 <- results[order(results$Accuracy, decreasing = TRUE),,drop=FALSE]
-ME_labels <- data.frame(MEs = row.names(results_764042)) 
-results_764042_xlxs <- cbind(ME_labels,results_764042)
-View(results_764042_xlxs)
+results_764134 <- results[order(results$Accuracy, decreasing = TRUE),,drop=FALSE]
+ME_labels <- data.frame(MEs = row.names(results_764134)) 
+results_764134_xlxs <- cbind(ME_labels,results_764134)
 
-dat <- data.frame(EG_combinations[[56]], y = indicator)
+dat <- data.frame(EG_combinations[[88]], y = indicator)
 id <- which(dat[,3] == 1)
 id0 <- which(dat[,3] == 0)
 
@@ -95,7 +92,7 @@ points(dat[id0,1], dat[id0,2], col='red')
 
 ```{r}
 
-raw_act <- read.csv(file="741078_activity.csv",row.names=1)
+raw_act <- read.csv(file="778304_activity.csv",row.names=1)
 raw_ME <- read.csv(file="MEs.csv",row.names=1)
 
 # Remove NA
@@ -105,7 +102,7 @@ MEs <- raw_ME[id,]
 
 # Indicator
 indicator <- rep(0,length(activity))
-id <- which(activity>6.5)
+id <- which(activity>7)
 indicator[id] <- 1
 indicator <- as.factor(indicator)
 
@@ -118,61 +115,25 @@ for (i in 1:length(EG_combinations)) {
   dat <- data.frame(EG_combinations[[i]], y = indicator)
   cnames <- colnames(EG_combinations[[i]])
   names[i] <- capture.output(cat(cnames, sep= "_"))
-  results[i,] <- SVM_(dat,70,10000)
+  results[i,] <- SVM_(dat,80,10000) #########change back to 10000
 }
 
 row.names(results) <- names
 
-results_741078 <- results[order(results$Accuracy, decreasing = TRUE),,drop=FALSE]
-ME_labels <- data.frame(MEs = row.names(results_741078)) 
-results_741078_xlxs <- cbind(ME_labels,results_741078)
+results_778304 <- results[order(results$Accuracy, decreasing = TRUE),,drop=FALSE]
+ME_labels <- data.frame(MEs = row.names(results_778304)) 
+results_778304_xlxs <- cbind(ME_labels,results_778304)
 
 
 ```
 
 ```{r}
 
-raw_act <- read.csv(file="768068_activity.csv",row.names=1)
-raw_ME <- read.csv(file="MEs.csv",row.names=1)
+dfs <- list(results_764134_xlxs,results_778304_xlxs)
 
-# Remove NA
-id <- which(!is.na(raw_act[,1]))
-activity <- raw_act[id,1]
-MEs <- raw_ME[id,]
+names(dfs) <- c("NSC_764134","NSC_778304")
 
-# Indicator
-indicator <- rep(0,length(activity))
-id <- which(activity>6.5)
-indicator[id] <- 1
-indicator <- as.factor(indicator)
-
-EG_combinations <- combn(MEs,2,simplify = FALSE)
-results <- data.frame(matrix(ncol = 5, nrow = length(EG_combinations)))
-colnames(results) <- c("Accuracy", "Sensitivity", "Specificity", "PPV", "NPV")
-names <- {}
-
-for (i in 1:length(EG_combinations)) {
-  dat <- data.frame(EG_combinations[[i]], y = indicator)
-  cnames <- colnames(EG_combinations[[i]])
-  names[i] <- capture.output(cat(cnames, sep= "_"))
-  results[i,] <- SVM_(dat,70,10000)
-}
-
-row.names(results) <- names
-
-results_768068 <- results[order(results$Accuracy, decreasing = TRUE),,drop=FALSE]
-ME_labels <- data.frame(MEs = row.names(results_768068)) 
-results_768068_xlxs <- cbind(ME_labels,results_768068)
-
-```
-
-```{r}
-
-dfs <- list(results_764042_xlxs,results_741078_xlxs,results_768068_xlxs)
-
-names(dfs) <- c("NSC_764042","NSC_741078","NSC_768068")
-
-writexl::write_xlsx(dfs,path="~/Documents/Git_Hub/Portfolio/Internship/Machine_learning/SVM_stats_6.5_cutoff.xlsx")
+writexl::write_xlsx(dfs,path="~/Documents/Git_Hub/Portfolio/Internship/Machine_learning/SVM_high_corr_drugs.xlsx")
 
 ```
 
