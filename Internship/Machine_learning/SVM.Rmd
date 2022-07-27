@@ -1,29 +1,17 @@
 ---
 title: "SVM"
+author: "Aaron_M"
 output: html_document
 date: '2022-07-01'
 ---
+
 
 ```{r}
 
 library(e1071)
 library(caTools)
 
-raw_act <- read.csv(file="764042_activity.csv",row.names=1)
-raw_ME <- read.csv(file="MEs.csv",row.names=1)
-
-# Remove NA
-id <- which(!is.na(raw_act[,1]))
-activity <- raw_act[id,1]
-MEs <- raw_ME[id,]
-
-# Indicator
-indicator <- rep(0,length(activity))
-id <- which(activity>6.5)
-indicator[id] <- 1
-indicator <- as.factor(indicator)
-
-SVM_ <- function (dat,percent_traning,ncycles) {
+SVM_ <- function (dat,percent_traning,ncycles,dim) {
   
   accuracy_all <- {}
   sensitivity_all <- {}
@@ -33,15 +21,14 @@ SVM_ <- function (dat,percent_traning,ncycles) {
   
     for(k in 1:ncycles) {
     id <- sample.int(nrow(dat), floor(length(activity) * percent_traning/100))
-
     training <- dat[id,]
     test <- dat[-id,]
-
     classifier <- svm(formula = y ~ ., data = training, 
                      type = 'C-classification', kernel = 'linear')
-    y_pred <- predict(classifier, newdata = test[,-3])
+    ncols <- dim + 1
+    y_pred <- predict(classifier, newdata = test[,-ncols])
 
-    cm <- table(test[, 3], y_pred)
+    cm <- table(test[, 4], y_pred)
     accuracy_all[k] <- (cm[1,1] + cm[2,2]) / (cm[1,1] + cm[2,2] + cm[1,2] + cm[2,1])
     sensitivity_all[k] <- cm[2,2]/(cm[2,2] + cm[2,1])
     specificity_all[k] <- cm[1,1]/(cm[1,1] + cm[1,2])
@@ -53,6 +40,7 @@ SVM_ <- function (dat,percent_traning,ncycles) {
   specificity_all[is.na(specificity_all)] <- 0
   PPV_all[is.na(PPV_all)] <- 0
   NPV_all[is.na(NPV_all)] <- 0
+
   
   acc <- mean(accuracy_all)
   sen <- mean(sensitivity_all)
@@ -63,118 +51,91 @@ SVM_ <- function (dat,percent_traning,ncycles) {
   return(results)
   
 }
-
-EG_combinations <- combn(MEs,2,simplify = FALSE)
-results <- data.frame(matrix(ncol = 5, nrow = length(EG_combinations)))
-colnames(results) <- c("Accuracy", "Sensitivity", "Specificity", "PPV", "NPV")
-names <- {}
-
-for (i in 1:length(EG_combinations)) {
-  dat <- data.frame(EG_combinations[[i]], y = indicator)
-  cnames <- colnames(EG_combinations[[i]])
-  names[i] <- capture.output(cat(cnames, sep= "_"))
-  results[i,] <- SVM_(dat,70,10000)
-}
-
-row.names(results) <- names
-
-results_764042 <- results[order(results$Accuracy, decreasing = TRUE),,drop=FALSE]
-ME_labels <- data.frame(MEs = row.names(results_764042)) 
-results_764042_xlxs <- cbind(ME_labels,results_764042)
-View(results_764042_xlxs)
-
-dat <- data.frame(EG_combinations[[56]], y = indicator)
-id <- which(dat[,3] == 1)
-id0 <- which(dat[,3] == 0)
-
-plot(dat[,1],dat[,2])
-points(dat[id,1], dat[id,2], col='green')
-points(dat[id0,1], dat[id0,2], col='red')
-
 ```
 
 ```{r}
 
-raw_act <- read.csv(file="741078_activity.csv",row.names=1)
+ML.func <- function (NSC,percent_traning,ncycles,dim,act) {
+  
+file <- paste(NSC,c("_activity.csv"),sep="")  
+
+raw_act <- read.csv(file=file,row.names=1)
 raw_ME <- read.csv(file="MEs.csv",row.names=1)
 
 # Remove NA
 id <- which(!is.na(raw_act[,1]))
-activity <- raw_act[id,1]
+activity <<- raw_act[id,1]
 MEs <- raw_ME[id,]
 
 # Indicator
 indicator <- rep(0,length(activity))
-id <- which(activity>6.5)
+id <- which(activity>act)
 indicator[id] <- 1
 indicator <- as.factor(indicator)
 
-EG_combinations <- combn(MEs,2,simplify = FALSE)
-results <- data.frame(matrix(ncol = 5, nrow = length(EG_combinations)))
+EG_combinations_3 <- combn(MEs,dim,simplify = FALSE)
+results <- data.frame(matrix(ncol = 5, nrow = length(EG_combinations_3)))
 colnames(results) <- c("Accuracy", "Sensitivity", "Specificity", "PPV", "NPV")
 names <- {}
 
-for (i in 1:length(EG_combinations)) {
-  dat <- data.frame(EG_combinations[[i]], y = indicator)
-  cnames <- colnames(EG_combinations[[i]])
+for (i in 1:length(EG_combinations_3)) {
+  dat <- data.frame(EG_combinations_3[[i]], y = indicator)
+  cnames <- colnames(EG_combinations_3[[i]])
   names[i] <- capture.output(cat(cnames, sep= "_"))
-  results[i,] <- SVM_(dat,70,10000)
+  results[i,] <- SVM_(dat,percent_traning,ncycles)
 }
+
+ names <<- names 
 
 row.names(results) <- names
 
-results_741078 <- results[order(results$Accuracy, decreasing = TRUE),,drop=FALSE]
-ME_labels <- data.frame(MEs = row.names(results_741078)) 
-results_741078_xlxs <- cbind(ME_labels,results_741078)
+results_sorted <- results[order(results$Accuracy, decreasing = TRUE),,drop=FALSE]
+ME_labels <- data.frame(MEs = row.names(results_sorted)) 
+results_sorted_xlsx <- cbind(ME_labels,results_sorted)
 
+out <- list(results,results_sorted,results_sorted_xlsx)
 
-```
+return(out)
 
-```{r}
-
-raw_act <- read.csv(file="768068_activity.csv",row.names=1)
-raw_ME <- read.csv(file="MEs.csv",row.names=1)
-
-# Remove NA
-id <- which(!is.na(raw_act[,1]))
-activity <- raw_act[id,1]
-MEs <- raw_ME[id,]
-
-# Indicator
-indicator <- rep(0,length(activity))
-id <- which(activity>6.5)
-indicator[id] <- 1
-indicator <- as.factor(indicator)
-
-EG_combinations <- combn(MEs,2,simplify = FALSE)
-results <- data.frame(matrix(ncol = 5, nrow = length(EG_combinations)))
-colnames(results) <- c("Accuracy", "Sensitivity", "Specificity", "PPV", "NPV")
-names <- {}
-
-for (i in 1:length(EG_combinations)) {
-  dat <- data.frame(EG_combinations[[i]], y = indicator)
-  cnames <- colnames(EG_combinations[[i]])
-  names[i] <- capture.output(cat(cnames, sep= "_"))
-  results[i,] <- SVM_(dat,70,10000)
 }
 
-row.names(results) <- names
-
-results_768068 <- results[order(results$Accuracy, decreasing = TRUE),,drop=FALSE]
-ME_labels <- data.frame(MEs = row.names(results_768068)) 
-results_768068_xlxs <- cbind(ME_labels,results_768068)
-
 ```
+
 
 ```{r}
 
-dfs <- list(results_764042_xlxs,results_741078_xlxs,results_768068_xlxs)
+library(tictoc)
 
-names(dfs) <- c("NSC_764042","NSC_741078","NSC_768068")
+# ML.func(dat= drugname, percent_traning= percent of data used for training, ncycles= number of cycles, dim= number of dimensions, act= activity cutoff)
 
-writexl::write_xlsx(dfs,path="~/Documents/Git_Hub/Portfolio/Internship/Machine_learning/SVM_stats_6.5_cutoff.xlsx")
+tic()
+NSC_287459_3D <- ML.func("NSC_287459",80,500,3,7)
+NSC_732517_3D <- ML.func("NSC_732517",80,500,3,7)
+NSC_778304_3D <- ML.func("NSC_778304",80,500,3,7)
+NSC_764042_3D <- ML.func("NSC_764042",80,500,3,7)
+NSC_759877_3D <- ML.func("NSC_759877",80,500,3,7)
+NSC_768068_3D <- ML.func("NSC_768068",80,500,3,7)
+NSC_764134_3D <- ML.func("NSC_764134",80,500,3,7)
+toc()
+
+save(NSC_287459_3D, NSC_732517_3D, NSC_778304_3D, NSC_764042_3D, NSC_759877_3D, NSC_768068_3D, NSC_764134_3D,file = "~/Documents/NCI-60/SVM_3D.Rdata")
+
+
 
 ```
+
+
+```{r}
+
+dfs <- list(NSC_764134_3D[[3]], NSC_778304_3D[[3]], NSC_759877_3D[[3]], NSC_764042_3D[[3]], NSC_768068_3D[[3]], NSC_732517_3D[[3]], NSC_287459_3D[[3]])
+
+names(dfs) <- c("NSC_764134", "NSC_778304", "NSC_759877", "NSC_764042", "NSC_768068", "NSC_732517", "NSC_287459")
+
+writexl::write_xlsx(dfs,path="~/Documents/NCI-60/SVM_3D.xlsx")
+
+```
+
+
 
 
 
