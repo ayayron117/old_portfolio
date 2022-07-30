@@ -1,16 +1,9 @@
----
-title: "SVM"
-author: "Aaron_M"
-date: '2022-07-01'
-output: github_document
----
+SVM
+================
+Aaron_M
+2022-07-01
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(eval = FALSE)
-```
-
-```{r}
-
+``` r
 library(e1071)
 library(caTools)
 library(tictoc)
@@ -22,11 +15,9 @@ drug_activity <- raw_drug_activity[,-c(1:9)]
 
 # Import module eigengene data
 raw_MEs <- read.csv(file="MEs.csv",row.names=1)
-
 ```
 
-```{r}
-
+``` r
 # ML.func(drug_activity= Drug activity dataset,
 #         dim= Dimension of ME combinations,
 #         act= Threshold for active classification ,
@@ -117,12 +108,9 @@ ML.func <- function (drug_activity,dim,act,percent_training,ncycles) {
   
   return(results_list)
 }
-
 ```
 
-
-```{r}
-
+``` r
 # Function for training and testing SVMs 
 SVM_ <- function (dat,dim,percent_training,ncycles) {
   
@@ -195,16 +183,13 @@ SVM_ <- function (dat,dim,percent_training,ncycles) {
 }
 ```
 
-```{r}
-
+``` r
 # tic()
 # test <- ML.func(drug_activity[1,],2,6,80,100)
 # toc()
-
 ```
 
-```{r}
-
+``` r
 SVM_results_2D_6_80_100 <- ML.func(drug_activity,2,6,80,100)
 SVM_results_2D_6.5_80_100 <- ML.func(drug_activity,2,6.5,80,100)
 SVM_results_2D_7_80_100 <- ML.func(drug_activity,2,7,80,100)
@@ -213,11 +198,9 @@ SVM_results_2D_7.5_80_100 <- ML.func(drug_activity,2,7.5,80,100)
 save(SVM_results_2D_6_80_100, SVM_results_2D_6.5_80_100, SVM_results_2D_7_80_100,
      SVM_results_2D_7.5_80_100, file =
        "~/Documents/Git_Hub/Portfolio/Internship/Machine_learning/SVM_varied_act.Rdata")
-
 ```
 
-```{r}
-
+``` r
 best.comb.xlsx <- function (results_df,drugnames) {
 out <- data.frame(matrix(ncol = ncol(results_df[[drugnames[1]]][["best_combination_xlsx"]]), 
                          nrow = nrow(drug_activity)))
@@ -227,11 +210,9 @@ colnames(out) <- colnames(results_df[[drugnames[1]]][["best_combination_xlsx"]])
   }
 return(out)
 }
-
 ```
 
-```{r}
-
+``` r
 drugnames <- row.names(raw_drug_activity)
 
 SVM_top_2D_6_80_100 <- best.comb.xlsx(SVM_results_2D_6_80_100,drugnames)
@@ -242,11 +223,9 @@ SVM_top_2D_7.5_80_100 <- best.comb.xlsx(SVM_results_2D_7.5_80_100,drugnames)
 dfs <- list(SVM_top_2D_6_80_100,SVM_top_2D_6.5_80_100,SVM_top_2D_7_80_100,SVM_top_2D_7.5_80_100)
 names(dfs) <- c("act= 6", "act= 6.5", "act= 7", "act= 7.5")
 writexl::write_xlsx(dfs,path="~/Documents/Git_Hub/Portfolio/Internship/Machine_learning/SVM_varied_act_100_cycles.xlsx")
-
 ```
 
-```{r}
-
+``` r
 SVM_results_2D_6_80_500 <- ML.func(drug_activity,2,6,80,500)
 SVM_results_2D_6.5_80_500 <- ML.func(drug_activity,2,6.5,80,500)
 SVM_results_2D_7_80_500 <- ML.func(drug_activity,2,7,80,500)
@@ -266,11 +245,9 @@ SVM_top_2D_7.5_80_500 <- best.comb.xlsx(SVM_results_2D_7.5_80_500,drugnames)
 dfs <- list(SVM_top_2D_6_80_500,SVM_top_2D_6.5_80_500,SVM_top_2D_7_80_500,SVM_top_2D_7.5_80_500)
 names(dfs) <- c("act= 6", "act= 6.5", "act= 7", "act= 7.5")
 writexl::write_xlsx(dfs,path="~/Documents/Git_Hub/Portfolio/Internship/Machine_learning/SVM_vact_2D_500_cycles.xlsx")
-
 ```
 
-```{r}
-
+``` r
 SVM_results_3D_6_80_50 <- ML.func(drug_activity,3,6,80,50)
 SVM_results_3D_6.5_80_50 <- ML.func(drug_activity,3,6.5,80,50)
 SVM_results_3D_7_80_50 <- ML.func(drug_activity,3,7,80,50)
@@ -290,15 +267,4 @@ SVM_top_3D_7.5_80_50 <- best.comb.xlsx(SVM_results_3D_7.5_80_50,drugnames)
 dfs <- list(SVM_top_3D_6_80_50,SVM_top_3D_6.5_80_50,SVM_top_3D_7_80_50,SVM_top_3D_7.5_80_50)
 names(dfs) <- c("act= 6", "act= 6.5", "act= 7", "act= 7.5")
 writexl::write_xlsx(dfs,path="~/Documents/Git_Hub/Portfolio/Internship/Machine_learning/SVM_vact_3D_50_cycles.xlsx")
-
-
-
 ```
-
-
-
-
-
-
-
-
