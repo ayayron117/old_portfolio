@@ -1,6 +1,8 @@
-Script used for machine learning
+Script Used for Machine Learning
 ================
 Aaron_M
+
+In this script, the e1071 package was used to train and test SVMs. Module eigengenes are used as predictors and drug activity is used as the indicator.
 
 ``` r
 library(e1071)
