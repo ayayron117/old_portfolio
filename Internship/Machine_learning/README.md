@@ -1,7 +1,6 @@
-SVM
+Script used for machine learning
 ================
 Aaron_M
-2022-07-01
 
 ``` r
 library(e1071)
