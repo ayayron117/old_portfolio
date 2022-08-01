@@ -1,4 +1,4 @@
-Script Used for Machine Learning
+Machine Learning Script
 ================
 
 The purpose of this script is to determine which module eigengenes are best for predicting drug activity for various FDA approved drugs. The e1071 package was used to train and test SVMs. Module eigengenes are used as predictors and drug activity is used as the indicator. This is a work in progress.  
